@@ -1,0 +1,13 @@
+# Ignore all .thumbs directories
+**/.thumbs/
+
+# Ignore all files in .thumbs directories
+**/.thumbs/*
+
+# Ignore .thumbs files (in case they're not in directories)
+**/*.thumbs
+
+# Optional: Ignore other common files/directories
+.DS_Store
+Thumbs.db
+.idea
