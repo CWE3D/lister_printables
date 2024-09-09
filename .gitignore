@@ -1,11 +1,11 @@
 # Ignore all .thumbs directories
-**/.thumbs/
+#**/.thumbs/
 
 # Ignore all files in .thumbs directories
-**/.thumbs/*
+#**/.thumbs/*
 
 # Ignore .thumbs files (in case they're not in directories)
-**/*.thumbs
+#**/*.thumbs
 
 # Optional: Ignore other common files/directories
 .DS_Store
