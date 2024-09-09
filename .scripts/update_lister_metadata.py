@@ -7,7 +7,7 @@ import time
 # Configuration
 MOONRAKER_URL = "http://localhost:7125"  # Adjust if necessary
 LISTER_PRINTABLES_PATH = "/home/pi/printer_data/gcodes/lister_printables"  # Adjust path as needed
-LOG_FILE = "/home/pi/printer_data/logs/metadata_scan.log"
+LOG_FILE = "/home/pi/printer_data/gcodes/lister_printables/metadata_scan.log"
 
 # Set up logging
 logging.basicConfig(filename=LOG_FILE, level=logging.INFO,
@@ -17,14 +17,17 @@ logging.basicConfig(filename=LOG_FILE, level=logging.INFO,
 def scan_file_metadata(file_path):
     relative_path = os.path.relpath(file_path, "/home/pi/printer_data/gcodes")
     encoded_path = quote(relative_path)
-    url = f"{MOONRAKER_URL}/server/files/metascan?filename={encoded_path}"
+    url = f"{MOONRAKER_URL}/server/files/metascan"
 
     try:
-        response = requests.get(url)
+        data = {"filename": encoded_path}
+        response = requests.post(url, json=data)
         response.raise_for_status()
         logging.info(f"Successfully scanned metadata for {relative_path}")
     except requests.exceptions.RequestException as e:
         logging.error(f"Error scanning metadata for {relative_path}: {str(e)}")
+        if hasattr(e, 'response') and e.response is not None:
+            logging.error(f"Response content: {e.response.content}")
 
 
 def walk_directory(directory):
