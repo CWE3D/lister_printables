@@ -4,7 +4,7 @@ import os
 import sys
 from crontab import CronTab
 
-METADATA_SCRIPT = "/home/pi/printer_data/gcodes/lister_printables/.scripts/update_lister_metadata.py"
+METADATA_SCRIPT = "/home/pi/lister_printables/scripts/update_lister_metadata.py"
 
 
 def setup_one_time_cron_job():
