@@ -1,4 +1,5 @@
 import os
+import sys
 import requests
 import logging
 from urllib.parse import quote
@@ -10,15 +11,23 @@ from requests.exceptions import RequestException
 MOONRAKER_URL = "http://localhost:7125"
 LISTER_PRINTABLES_PATH = "/home/pi/printer_data/gcodes/lister_printables"
 LOG_FILE = "/home/pi/printer_data/logs/metadata_scan.log"
-MAX_RETRIES = 10
-RETRY_DELAY = 30  # seconds
+GCODES_ROOT = "/home/pi/printer_data/gcodes"
+MAX_RETRIES = 30
+RETRY_DELAY = 10  # seconds
 SCAN_DELAY = 0.5  # seconds
 
 
 def setup_logging():
-    os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
-    logging.basicConfig(filename=LOG_FILE, level=logging.INFO,
-                        format='%(asctime)s - %(levelname)s - %(message)s')
+    try:
+        os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
+        logging.basicConfig(filename=LOG_FILE, level=logging.INFO,
+                            format='%(asctime)s - %(levelname)s - %(message)s')
+        logging.info(f"Script started. Python version: {sys.version}")
+        logging.info(f"Script path: {os.path.abspath(__file__)}")
+        logging.info(f"Working directory: {os.getcwd()}")
+    except Exception as e:
+        print(f"Failed to set up logging: {str(e)}")
+        sys.exit(1)
 
 
 def is_moonraker_ready():
@@ -41,7 +50,7 @@ def wait_for_moonraker():
 
 
 def scan_file_metadata(file_path):
-    relative_path = os.path.relpath(file_path, "/home/pi/printer_data/gcodes")
+    relative_path = os.path.relpath(file_path, GCODES_ROOT)
     encoded_path = quote(relative_path)
     url = f"{MOONRAKER_URL}/server/files/metascan"
 
@@ -64,12 +73,18 @@ def walk_directory(directory):
             dirs.remove('.thumbs')
         for file in files:
             if file.lower().endswith(('.gcode', '.g', '.gco')):
-                yield os.path.join(root, file)
+                full_path = os.path.join(root, file)
+                logging.info(f"Found file: {full_path}")
+                yield full_path
 
 
 def main():
     setup_logging()
     logging.info("Starting Lister metadata scan")
+
+    if not os.path.exists(GCODES_ROOT):
+        logging.error(f"Gcodes root directory does not exist: {GCODES_ROOT}")
+        sys.exit(1)
 
     if not wait_for_moonraker():
         logging.error("Moonraker is not ready after maximum retries. Aborting metadata scan.")
