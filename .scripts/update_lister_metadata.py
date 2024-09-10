@@ -9,9 +9,15 @@ MOONRAKER_URL = "http://localhost:7125"  # Adjust if necessary
 LISTER_PRINTABLES_PATH = "/home/pi/printer_data/gcodes/lister_printables"  # Adjust path as needed
 LOG_FILE = "/home/pi/printer_data/gcodes/lister_printables/metadata_scan.log"
 
-# Set up logging
-logging.basicConfig(filename=LOG_FILE, level=logging.INFO,
-                    format='%(asctime)s - %(levelname)s - %(message)s')
+
+def setup_logging():
+    # Delete the old log file if it exists
+    if os.path.exists(LOG_FILE):
+        os.remove(LOG_FILE)
+
+    # Set up logging
+    logging.basicConfig(filename=LOG_FILE, level=logging.INFO,
+                        format='%(asctime)s - %(levelname)s - %(message)s')
 
 
 def scan_file_metadata(file_path):
@@ -40,6 +46,7 @@ def walk_directory(directory):
 
 
 def main():
+    setup_logging()
     logging.info("Starting Lister metadata scan")
     start_time = time.time()
 
