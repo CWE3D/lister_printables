@@ -1,7 +1,5 @@
 #!/bin/bash
 
-# File: /home/pi/lister_printables/install.sh
-
 PLUGIN_DIR="/home/pi/lister_printables"
 GCODES_DIR="/home/pi/printer_data/gcodes/lister_printables"
 SCRIPTS_DIR="/home/pi/printer_data/config/lister_scripts"
