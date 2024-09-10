@@ -4,6 +4,8 @@ PLUGIN_DIR="/home/pi/lister_printables"
 GCODES_DIR="/home/pi/printer_data/gcodes/lister_printables"
 SCRIPTS_DIR="/home/pi/printer_data/config/lister_scripts"
 
+touch /home/pi/printer_data/logs/lister_printables_installing.log
+
 # Create necessary directories
 mkdir -p "$GCODES_DIR"
 mkdir -p "$SCRIPTS_DIR"
