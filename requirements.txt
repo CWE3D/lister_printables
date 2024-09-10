@@ -1,1 +1,2 @@
-# Nothing needed for now
+# Install probable requirements
+python-crontab==2.7.1
