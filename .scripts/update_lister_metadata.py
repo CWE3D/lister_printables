@@ -16,7 +16,6 @@ MAX_RETRIES = 30
 RETRY_DELAY = 10  # seconds
 SCAN_DELAY = 0.5  # seconds
 
-
 def setup_logging():
     try:
         os.makedirs(os.path.dirname(LOG_FILE), exist_ok=True)
