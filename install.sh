@@ -18,7 +18,7 @@ rsync -av --delete "$PLUGIN_DIR/gcodes/" "$GCODES_DIR/" >> "$INSTALL_LOG" 2>&1
 
 # Make scripts executable
 echo "Making scripts executable..." >> "$INSTALL_LOG"
-chmod +x "$SCRIPTS_DIR"/*.sh
+chmod +x "$PLUGIN_DIR"/*.sh
 chmod +x "$SCRIPTS_DIR"/*.py
 
 # Run the one-time cron setup
