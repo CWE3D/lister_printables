@@ -1,5 +1,4 @@
 #!/bin/bash
-
 # File: /home/pi/lister_printables/scripts/setup_one_time_cron.sh
 
 METADATA_SCRIPT="/home/pi/lister_printables/scripts/update_lister_metadata.py"
