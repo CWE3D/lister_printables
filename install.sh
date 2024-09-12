@@ -40,11 +40,11 @@ pip3 install -r requirements.txt
 # Make the scripts executable
 log_message "Setting script permissions"
 chmod +x "$SCRIPTS_DIR/update_lister_metadata.py"
-chmod +x "$SCRIPTS_DIR/setup_cron_job.py"
+chmod +x "$SCRIPTS_DIR/setup_one_time_cron.py.py"
 
 # Setup cron job
 log_message "Setting up cron job"
-python3 "$SCRIPTS_DIR/setup_cron_job.py"
+python3 "$SCRIPTS_DIR/setup_one_time_cron.py.py"
 
 # Trigger immediate metadata scan
 log_message "Triggering initial metadata scan"
