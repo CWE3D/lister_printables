@@ -1,44 +1,56 @@
 #!/bin/bash
 
-PLUGIN_DIR="/home/pi/lister_printables"
-GCODES_DIR="/home/pi/printer_data/gcodes/lister_printables"
-SCRIPTS_DIR="$PLUGIN_DIR/scripts"
-INSTALL_LOG="/home/pi/printer_data/logs/lister_printables_installing.log"
-COMPLETE_LOG="/home/pi/printer_data/logs/lister_printables_installed.log"
-VERSION_FILE="$PLUGIN_DIR/version.txt"
+set -e
 
-# Start installation/update
-echo "Starting Lister Printables plugin installation/update at $(date)" > "$INSTALL_LOG"
+REPO_URL="https://github.com/CWE3D/lister_printables.git"
+INSTALL_DIR="/home/pi/printer_data/gcodes/lister_printables"
+SCRIPTS_DIR="$INSTALL_DIR/scripts"
+LOG_DIR="/home/pi/printer_data/logs"
+INSTALL_LOG="$LOG_DIR/lister_printables_install.log"
 
-# Check if this is a new installation or an update
-if [ -f "$VERSION_FILE" ]; then
-    OLD_VERSION=$(cat "$VERSION_FILE")
+# Function to log messages
+log_message() {
+    echo "$(date): $1" | tee -a "$INSTALL_LOG"
+}
+
+# Create log directory if it doesn't exist
+mkdir -p "$LOG_DIR"
+
+log_message "Starting Lister Printables plugin installation/update"
+
+# Check if the directory exists
+if [ -d "$INSTALL_DIR" ]; then
+    log_message "Lister Printables directory exists. Updating..."
+    cd "$INSTALL_DIR"
+    git pull origin main
+    log_message "Update completed"
 else
-    OLD_VERSION="0.0.0"
+    log_message "Lister Printables directory does not exist. Cloning repository..."
+    git clone "$REPO_URL" "$INSTALL_DIR"
+    log_message "Clone completed"
 fi
 
-# Get new version (this assumes you maintain a version.txt in your repo)
-NEW_VERSION=$(cat "$PLUGIN_DIR/version.txt")
+# Navigate to the plugin directory
+cd "$INSTALL_DIR"
 
-echo "Old version: $OLD_VERSION" >> "$INSTALL_LOG"
-echo "New version: $NEW_VERSION" >> "$INSTALL_LOG"
+# Install Python requirements
+log_message "Installing Python requirements"
+pip3 install -r requirements.txt
 
-# Perform installation/update steps
-mkdir -p "$GCODES_DIR"
+# Make the scripts executable
+log_message "Setting script permissions"
+chmod +x "$SCRIPTS_DIR/update_lister_metadata.py"
+chmod +x "$SCRIPTS_DIR/setup_cron_job.py"
 
-echo "Syncing gcode files..." >> "$INSTALL_LOG"
-rsync -av --delete "$PLUGIN_DIR/gcodes/" "$GCODES_DIR/" >> "$INSTALL_LOG" 2>&1
+# Setup cron job
+log_message "Setting up cron job"
+python3 "$SCRIPTS_DIR/setup_cron_job.py"
 
-echo "Making scripts executable..." >> "$INSTALL_LOG"
-chmod +x "$PLUGIN_DIR"/*.sh
-chmod +x "$SCRIPTS_DIR"/*.py
+# Trigger immediate metadata scan
+log_message "Triggering initial metadata scan"
+python3 "$SCRIPTS_DIR/update_lister_metadata.py"
 
-# Run the one-time cron setup
-echo "Setting up one-time cron job..." >> "$INSTALL_LOG"
-bash "$SCRIPTS_DIR/setup_one_time_cron.sh" >> "$INSTALL_LOG" 2>&1
+# Mark installation as complete
+touch "$LOG_DIR/lister_printables_installed.log"
 
-# Update version file
-echo "$NEW_VERSION" > "$VERSION_FILE"
-
-echo "Lister printables plugin installed/updated successfully!" | tee -a "$INSTALL_LOG" "$COMPLETE_LOG"
-echo "Installation/update completed at $(date)" >> "$COMPLETE_LOG"
+log_message "Lister printables plugin installed/updated successfully!"
