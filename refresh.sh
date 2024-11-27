@@ -61,7 +61,10 @@ update_repo() {
 
         if [ "$LOCAL" != "$REMOTE" ]; then
             log_message "Updates found. Pulling changes..."
-            git pull
+            # Reset any local changes and pull
+            git reset --hard
+            git clean -fd
+            git pull --force
             
             # Fetch and checkout LFS files after pull
             git lfs fetch --all

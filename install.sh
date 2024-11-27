@@ -37,7 +37,9 @@ if [ -d "$INSTALL_DIR" ]; then
     git lfs checkout
     
     # Pull latest changes
-    git pull origin main
+    git reset --hard
+    git clean -fd
+    git pull --force origin main
     log_message "Update completed"
 else
     log_message "Lister Printables directory does not exist. Cloning repository..."
