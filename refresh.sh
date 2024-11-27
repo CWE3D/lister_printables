@@ -40,9 +40,20 @@ update_repo() {
 
     if [ ! -d "$REPO_DIR" ]; then
         log_message "Repository not found. Cloning..."
+        # Initialize Git LFS before cloning
+        git lfs install
         git clone https://github.com/CWE3D/lister_printables.git "$REPO_DIR"
     else
         cd "$REPO_DIR" || exit 1
+        
+        # Initialize Git LFS for this repository
+        git lfs install
+        
+        # Fetch all LFS files
+        log_message "Fetching LFS files..."
+        git lfs fetch --all
+        git lfs checkout
+        
         git fetch
 
         LOCAL=$(git rev-parse @)
@@ -51,6 +62,11 @@ update_repo() {
         if [ "$LOCAL" != "$REMOTE" ]; then
             log_message "Updates found. Pulling changes..."
             git pull
+            
+            # Fetch and checkout LFS files after pull
+            git lfs fetch --all
+            git lfs checkout
+            
             return 0
         else
             log_message "Already up to date"
