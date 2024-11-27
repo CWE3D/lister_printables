@@ -18,14 +18,31 @@ mkdir -p "$LOG_DIR"
 
 log_message "Starting Lister Printables plugin installation/update"
 
+# Install Git LFS
+log_message "Installing Git LFS"
+sudo apt-get update
+sudo apt-get install -y git-lfs
+
 # Check if the directory exists
 if [ -d "$INSTALL_DIR" ]; then
     log_message "Lister Printables directory exists. Updating..."
     cd "$INSTALL_DIR"
+    
+    # Initialize Git LFS for this repository
+    git lfs install
+    
+    # Fetch all LFS files and checkout
+    log_message "Fetching LFS files..."
+    git lfs fetch --all
+    git lfs checkout
+    
+    # Pull latest changes
     git pull origin main
     log_message "Update completed"
 else
     log_message "Lister Printables directory does not exist. Cloning repository..."
+    # Initialize Git LFS before cloning
+    git lfs install
     git clone "$REPO_URL" "$INSTALL_DIR"
     log_message "Clone completed"
 fi
