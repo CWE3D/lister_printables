@@ -42,29 +42,36 @@ fix_permissions() {
     log_message "INFO" "Fixing permissions for installation"
     
     if [ -d "$INSTALL_DIR" ]; then
-        # Fix owner and group recursively
-        chown -R pi:pi "$INSTALL_DIR"
-        
-        # Fix directory permissions
+        # First, set all directories to 755
         find "$INSTALL_DIR" -type d -exec chmod 755 {} \;
         
-        # Reset all file permissions to 644 first
+        # Set all files to 644 by default
         find "$INSTALL_DIR" -type f -exec chmod 644 {} \;
         
-        # Let git set the correct executable bits based on .gitattributes
+        # Only if it's a git repository
         if [ -d "$INSTALL_DIR/.git" ]; then
-            (cd "$INSTALL_DIR" && git diff --quiet || {
-                git reset --hard
-                git config core.fileMode true
-                git checkout --force HEAD
+            (cd "$INSTALL_DIR" && {
+                # Make sure we're on the right branch
+                git checkout -f main
+                
+                # Set executable bit only for files marked as executable in .gitattributes
+                git ls-files --stage | while read mode hash stage file; do
+                    if [ "$mode" = "100755" ]; then
+                        chmod +x "$file"
+                    fi
+                done
             })
         fi
+        
+        # Set ownership after all permission changes
+        chown -R pi:pi "$INSTALL_DIR"
     fi
 
     # Fix log directory permissions
     log_message "INFO" "Fixing permissions for log directory"
+    find "$LOG_DIR" -type d -exec chmod 755 {} \;
+    find "$LOG_DIR" -type f -exec chmod 644 {} \;
     chown -R pi:pi "$LOG_DIR"
-    chmod 755 "$LOG_DIR"
 }
 
 # Main installation process
