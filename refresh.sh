@@ -13,44 +13,74 @@ LOG_DIR="/home/pi/printer_data/logs"
 UPDATE_LOG="$LOG_DIR/lister_printables_update.log"
 SCRIPTS_DIR="$REPO_DIR/scripts"
 
-# Function to log messages
+# Function to log messages with severity
 log_message() {
-    echo -e "${GREEN}$(date): $1${NC}" | tee -a "$UPDATE_LOG"
-}
-
-log_error() {
-    echo -e "${RED}$(date): $1${NC}" | tee -a "$UPDATE_LOG"
-}
-
-log_warning() {
-    echo -e "${YELLOW}$(date): $1${NC}" | tee -a "$UPDATE_LOG"
+    local severity=$1
+    local message=$2
+    local color=$GREEN
+    
+    case $severity in
+        "ERROR") color=$RED ;;
+        "WARN") color=$YELLOW ;;
+        *) color=$GREEN ;;
+    esac
+    
+    echo -e "${color}$(date): [$severity] $message${NC}" | tee -a "$UPDATE_LOG"
 }
 
 # Function to check if running as root
 check_root() {
     if [ "$EUID" -ne 0 ]; then
-        log_error "Please run as root (sudo)"
+        log_message "ERROR" "Please run as root (sudo)"
         exit 1
     fi
 }
 
+# Function to fix permissions
+fix_permissions() {
+    log_message "INFO" "Fixing permissions for repository"
+    
+    if [ -d "$REPO_DIR" ]; then
+        # Fix owner and group recursively
+        chown -R pi:pi "$REPO_DIR"
+        
+        # Fix directory permissions
+        find "$REPO_DIR" -type d -exec chmod 755 {} \;
+        
+        # Reset all file permissions to 644 first
+        find "$REPO_DIR" -type f -exec chmod 644 {} \;
+        
+        # Let git set the correct executable bits based on .gitattributes
+        if [ -d "$REPO_DIR/.git" ]; then
+            (cd "$REPO_DIR" && git diff --quiet || {
+                git reset --hard
+                git config core.fileMode true
+                git checkout --force HEAD
+            })
+        fi
+    fi
+
+    # Fix log directory permissions
+    log_message "INFO" "Fixing permissions for log directory"
+    chown -R pi:pi "$LOG_DIR"
+    chmod 755 "$LOG_DIR"
+}
+
 # Function to update repository
 update_repo() {
-    log_message "Updating lister printables repository..."
+    log_message "INFO" "Updating lister printables repository..."
 
     if [ ! -d "$REPO_DIR" ]; then
-        log_message "Repository not found. Cloning..."
-        # Initialize Git LFS before cloning
+        log_message "INFO" "Repository not found. Cloning..."
         git lfs install
         git clone https://github.com/CWE3D/lister_printables.git "$REPO_DIR"
+        fix_permissions
     else
         cd "$REPO_DIR" || exit 1
         
-        # Initialize Git LFS for this repository
         git lfs install
         
-        # Fetch all LFS files
-        log_message "Fetching LFS files..."
+        log_message "INFO" "Fetching LFS files..."
         git lfs fetch --all
         git lfs checkout
         
@@ -60,19 +90,18 @@ update_repo() {
         REMOTE=$(git rev-parse @{u})
 
         if [ "$LOCAL" != "$REMOTE" ]; then
-            log_message "Updates found. Pulling changes..."
-            # Reset any local changes and pull
+            log_message "INFO" "Updates found. Pulling changes..."
             git reset --hard
             git clean -fd
             git pull --force
             
-            # Fetch and checkout LFS files after pull
             git lfs fetch --all
             git lfs checkout
             
+            fix_permissions
             return 0
         else
-            log_message "Already up to date"
+            log_message "INFO" "Already up to date"
             return 1
         fi
     fi
@@ -80,30 +109,32 @@ update_repo() {
 
 # Function to update metadata
 update_metadata() {
-    log_message "Updating printables metadata..."
+    log_message "INFO" "Updating printables metadata..."
     if [ -f "$SCRIPTS_DIR/update_lister_metadata.py" ]; then
         python3 "$SCRIPTS_DIR/update_lister_metadata.py"
     else
-        log_error "Metadata update script not found"
+        log_message "ERROR" "Metadata update script not found"
         return 1
     fi
 }
 
 # Main update process
 main() {
-    log_message "Starting lister printables update process..."
+    log_message "INFO" "Starting lister printables update process..."
 
     check_root
 
     # Update repository
     if update_repo; then
-        # Update metadata if there were repository updates
         update_metadata
     else
-        log_message "No updates found. Skipping metadata update."
+        log_message "INFO" "No updates found. Skipping metadata update."
     fi
 
-    log_message "Update process completed!"
+    # Final permission check
+    fix_permissions
+
+    log_message "INFO" "Update process completed!"
 
     # Print verification steps
     echo -e "\n${GREEN}Verify the update:${NC}"
@@ -112,4 +143,4 @@ main() {
 }
 
 # Run the update
-main 
+main
