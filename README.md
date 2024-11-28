@@ -1,5 +1,7 @@
 # Lister Printables Plugin
 
+## Version 2.0.0
+
 ## Overview
 
 The Lister Printables plugin is a specialized tool designed exclusively for Lister 3D printers. This plugin enhances your printing experience by providing easy access to the latest sliced gcode files for every part of your Lister printer.
